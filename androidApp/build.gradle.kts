@@ -51,4 +51,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     compileOnly("io.realm.kotlin:library-sync:1.4.0")
     implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 }
