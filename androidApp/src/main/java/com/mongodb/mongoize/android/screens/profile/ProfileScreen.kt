@@ -73,7 +73,7 @@ class ProfileScreen : ComponentActivity() {
 
         profileVM.userInfo.observeAsState().apply {
             this.value?.let {
-                name.value = it.name
+                name.value = it.surname
                 email.value = it.email
                 orgName.value = it.orgName ?: ""
                 phoneNumber.value = it.phoneNumber?.toString() ?: ""

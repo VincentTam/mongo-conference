@@ -17,14 +17,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDateTime
 
 class RealmRepo {
 
-    private val schemaClass = setOf(UserInfo::class, SessionInfo::class, ConferenceInfo::class)
+    private val schemaClass = setOf(UserInfo::class, AppointmentInfo::class)
 
     private val appService by lazy {
         val appConfiguration =
-            AppConfiguration.Builder(appId = "rconfernce-vkrny").log(LogLevel.ALL).build()
+            AppConfiguration.Builder(appId = "application-0-yjxbg").log(LogLevel.ALL).build()
         App.create(appConfiguration)
     }
 
@@ -35,10 +36,10 @@ class RealmRepo {
             SyncConfiguration.Builder(user, schemaClass).name("conferenceInfo").schemaVersion(1)
                 .initialSubscriptions { realm ->
                     add(realm.query<UserInfo>(), name = "user info", updateExisting = true)
-                    add(realm.query<SessionInfo>(), name = "session info", updateExisting = true)
+                    add(realm.query<AppointmentInfo>(), name = "appointment info", updateExisting = true)
                     add(
-                        realm.query<ConferenceInfo>(),
-                        name = "conference info",
+                        realm.query<AppointmentInfo>(),
+                        name = "appointment info",
                         updateExisting = true
                     )
                 }.waitForInitialRemoteData().build()
@@ -84,7 +85,17 @@ class RealmRepo {
         return flowOf(appService.currentUser != null)
     }
 
-    suspend fun saveUserInfo(name: String, orgName: String, phoneNumber: String) {
+    suspend fun saveUserInfo(
+        surname: String,
+        firstName: String,
+        dateOfBirth: LocalDateTime,
+        phoneNumber: String,
+        specification: String,
+        isReceptionist: Boolean,
+        gender: String,
+        workingHours: List<TimeSlot>,
+        isActive: Boolean
+    ) {
         withContext(Dispatchers.Default) {
             if (appService.currentUser != null) {
                 val userId = appService.currentUser!!.id
@@ -92,9 +103,15 @@ class RealmRepo {
                     var user = query<UserInfo>("_id = $0", userId).first().find()
                     if (user != null) {
                         user = findLatest(user)!!.also {
-                            it.name = name
-                            it.orgName = orgName
+                            it.surname = surname
+                            it.firstName = firstName
+                            it.dateOfBirth = dateOfBirth
                             it.phoneNumber = phoneNumber.toLongOrNull()
+                            it.specification = specification
+                            it.isReceptionist = isReceptionist
+                            it.gender = gender
+                            it.workingHours = workingHours
+                            it.isActive = isActive
                         }
                         copyToRealm(user)
                     }
@@ -107,53 +124,34 @@ class RealmRepo {
         appService.currentUser?.logOut()
     }
 
-    suspend fun addConference(name: String, location: String, startDate: String, endDate: String) {
+    suspend fun addAppointment(doctor: ObjectId, patient: ObjectId, time: LocalDateTime) {
         withContext(Dispatchers.Default) {
             realm.write {
-                val conferenceInfo = ConferenceInfo().apply {
-                    this.name = name
-                    this.location = location
-                    this.startDate = startDate
-                    this.endDate = endDate
+                val appointmentInfo = AppointmentInfo().apply {
+                    this.doctor = doctor
+                    this.patient = patient
+                    this.time = time
                 }
-                copyToRealm(conferenceInfo)
+                copyToRealm(appointmentInfo)
             }
         }
     }
 
-    suspend fun getEventLists(): CommonFlow<List<ConferenceInfo>> {
+    suspend fun getAppointmentLists(): CommonFlow<List<AppointmentInfo>> {
         return withContext(Dispatchers.Default) {
-            realm.query<ConferenceInfo>().asFlow().map {
+            realm.query<AppointmentInfo>().asFlow().map {
                 it.list
             }
         }.asCommonFlow()
     }
 
-    suspend fun getTalks(conferenceId: ObjectId): CommonFlow<List<SessionInfo>> {
+    suspend fun cancelAppointment(appointmentId: ObjectId, isCancelled: Boolean) {
         return withContext(Dispatchers.Default) {
-            realm.query<SessionInfo>("conferenceId = $0 && isAccepted != true", conferenceId)
-                .asFlow().map {
-                    it.list
-                }.asCommonFlow()
-        }
-    }
-
-    suspend fun getSelectedTalks(conferenceId: ObjectId): CommonFlow<List<SessionInfo>> {
-        return withContext(Dispatchers.Default) {
-            realm.query<SessionInfo>("conferenceId = $0 && isAccepted = true", conferenceId)
-                .asFlow().map {
-                    it.list
-                }.asCommonFlow()
-        }
-    }
-
-    suspend fun updateTalkState(sessionId: ObjectId, state: Boolean) {
-        return withContext(Dispatchers.Default) {
-            val session = realm.query<SessionInfo>("_id = $0", sessionId).first().find()
-            if (session != null) {
+            val appointment = realm.query<AppointmentInfo>("_id = $0", appointmentId).first().find()
+            if (appointment != null) {
                 realm.write {
-                    (findLatest(session) as SessionInfo).run {
-                        this.isAccepted = state
+                    (findLatest(appointment) as AppointmentInfo).run {
+                        this.isCancelled = true
                         copyToRealm(this)
                     }
                 }

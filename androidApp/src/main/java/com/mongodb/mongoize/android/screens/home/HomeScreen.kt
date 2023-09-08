@@ -47,9 +47,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mongodb.mongoize.ConferenceInfo
+import com.mongodb.mongoize.AppointmentInfo
 import com.mongodb.mongoize.android.R
-import com.mongodb.mongoize.android.screens.addconference.AddConferenceActivity
+import com.mongodb.mongoize.android.screens.addAppointment.AddAppointmentActivity
 import com.mongodb.mongoize.android.screens.conferenceDetail.ConferenceDetailView
 import com.mongodb.mongoize.android.screens.profile.ProfileScreen
 import io.realm.kotlin.types.ObjectId
@@ -105,7 +105,7 @@ class HomeScreen : ComponentActivity() {
             )
         }, floatingActionButton = {
             FloatingActionButton(onClick = {
-                startActivity(Intent(context, AddConferenceActivity::class.java))
+                startActivity(Intent(context, AddAppointmentActivity::class.java))
             }) {
                 Icon(Icons.Filled.Add, "")
             }
@@ -157,7 +157,7 @@ class HomeScreen : ComponentActivity() {
     }
 
     @Composable
-    fun EventItem(conferenceInfo: ConferenceInfo) {
+    fun EventItem(appointmentInfo: AppointmentInfo) {
         val context = LocalContext.current
 
         Card(
@@ -167,8 +167,8 @@ class HomeScreen : ComponentActivity() {
                 .clickable {
                     goToConferenceDetails(
                         context = context,
-                        conferenceName = conferenceInfo.name,
-                        conferenceId = conferenceInfo._id
+                        conferenceName = appointmentInfo.name,
+                        conferenceId = appointmentInfo._id
                     )
                 },
             shape = RoundedCornerShape(4.dp),
@@ -190,13 +190,13 @@ class HomeScreen : ComponentActivity() {
                 ) {
                     Text(
                         modifier = Modifier.padding(bottom = 8.dp),
-                        text = "${conferenceInfo.name}, ${conferenceInfo.location}",
+                        text = "${appointmentInfo.name}, ${appointmentInfo.notes}",
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
-                        text = conferenceInfo.startDate,
+                        text = appointmentInfo.time,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }

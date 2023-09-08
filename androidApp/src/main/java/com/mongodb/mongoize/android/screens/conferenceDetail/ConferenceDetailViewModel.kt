@@ -30,7 +30,7 @@ class ConferenceDetailViewModel() : ViewModel() {
 
     fun updateTalkStatus(talkId: ObjectId, state: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.updateTalkState(talkId, state)
+            repo.cancelAppointment(talkId, state)
         }
     }
 }

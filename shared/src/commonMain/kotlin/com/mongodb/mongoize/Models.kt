@@ -2,50 +2,47 @@ package com.mongodb.mongoize
 
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 
 
 class UserInfo : RealmObject {
     @PrimaryKey
-    var _id: String = ""
-    var name: String = ""
+    var _id: ObjectId = ObjectId.create()
+    var surname: String = ""
+    var firstName: String = ""
+    var dateOfBirth: LocalDateTime = LocalDateTime(1970,1,1,0,0,0,0)
     var email: String = ""
-    var orgName: String? = null
     var phoneNumber: Long? = null
+    var specification: String? = null
     var isAdmin: Boolean = false
-
+    var isReceptionist: Boolean = false
+    var gender: String = "H"
+    var workingHours: List<TimeSlot> = listOf()
+    var isActive: Boolean = true
 }
 
-class SessionInfo : RealmObject {
+class TimeSlot {
+    var start: LocalTime = LocalTime(9,0,0,0)
+    var end: LocalTime = LocalTime(12,0,0,0)
+}
 
+class AppointmentInfo : RealmObject {
     @PrimaryKey
     var _id: ObjectId = ObjectId.create()
-    var talkTitle: String = ""
-    var abstract: String = ""
-    var duration: Int = 0
+    var doctor: ObjectId? = null
+    var patient: ObjectId? = null
+    var time: LocalDateTime? = null
+    var notes: String = ""
+    var isCancelled: Boolean = false
+    var arrivalTime: LocalDateTime? = null
     var isAccepted: Boolean = false
-    var conferenceId: ObjectId = ObjectId.create()
+    var prescription: List<PrescriptionLine> = listOf()
 }
 
-class ConferenceInfo : RealmObject {
-
-    @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
-    var name: String = ""
-    var startDate: String = ""
-    var endDate: String = ""
-    var location: String = ""
-    @Ignore
-    var submissionCount: Long = 0L
-
-    @Ignore
-    var id: String = _id.toString()
+class PrescriptionLine {
+    var medicine: String = ""
+    var qty: Int = 0
+    var mode: String = ""
 }
-
-
-
-
-
-
-

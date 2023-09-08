@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.mongodb.mongoize.android.screens.addconference
+package com.mongodb.mongoize.android.screens.addAppointment
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -33,7 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mongodb.mongoize.android.MyApplicationTheme
 import com.mongodb.mongoize.android.R
 
-class AddConferenceActivity : ComponentActivity() {
+class AddAppointmentActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +67,7 @@ class AddConferenceActivity : ComponentActivity() {
     @Composable
     fun ContentView(topPadding: Dp) {
 
-        val vm = viewModel<AddConferenceViewModel>()
+        val vm = viewModel<AddAppointmentViewModel>()
 
         val name = remember { mutableStateOf("") }
         val location = remember { mutableStateOf<String>("") }
