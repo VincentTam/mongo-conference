@@ -2,12 +2,12 @@
 <resources>
 
     <string name="reg_name">Name</string>
-    <string name="app_name">RConfManager</string>
+    <string name="app_name">Monkey's Medicine</string>
     <string name="profile_edit">Edit</string>
     <string name="profile_save">Save</string>
     <string name="profile_logout">Logout</string>
 
-    <string name="conference_activity">Conference Details</string>
-    <string name="conference_save">Save</string>
+    <string name="appointment_activity">Appointment Details</string>
+    <string name="appointment_save">Save</string>
 
 </resources>
