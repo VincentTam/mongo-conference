@@ -1,15 +1,15 @@
 package com.mongodb.mongoize
 
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import org.mongodb.kbson.ObjectId
 
 
 class UserInfo : RealmObject {
     @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
+    var _id: ObjectId = ObjectId()
     var surname: String = ""
     var firstName: String = ""
     var dateOfBirth: LocalDateTime = LocalDateTime(1970,1,1,0,0,0,0)
@@ -30,7 +30,7 @@ class TimeSlot {
 
 class AppointmentInfo : RealmObject {
     @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
+    var _id: ObjectId = ObjectId()
     var doctor: ObjectId? = null
     var patient: ObjectId? = null
     var time: LocalDateTime? = null

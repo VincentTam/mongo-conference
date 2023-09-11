@@ -27,8 +27,8 @@ kotlin {
         val commonMain by getting {
 
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-                implementation("io.realm.kotlin:library-sync:1.4.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+                implementation("io.realm.kotlin:library-sync:1.9.0")
                 implementation("io.github.aakira:napier:2.6.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
             }
@@ -66,7 +66,7 @@ android {
     namespace = "com.mongodb.mongoize"
     compileSdk = 33
     defaultConfig {
-        minSdk = 25
+        minSdk = 26
         targetSdk = 33
     }
 }

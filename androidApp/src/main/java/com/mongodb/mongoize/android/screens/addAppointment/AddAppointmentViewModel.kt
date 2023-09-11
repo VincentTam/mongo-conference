@@ -5,15 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.mongodb.mongoize.RealmRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
+import org.mongodb.kbson.ObjectId
 
 class AddAppointmentViewModel : ViewModel() {
-
     private val repo = RealmRepo()
-
-    fun addConference(name: String, location: String, startDate: String, endDate: String) {
-
+    fun addAppointment(doctor: ObjectId, patient: ObjectId, time: LocalDateTime) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.addAppointment(name, location, startDate, endDate)
+            repo.addAppointment(doctor, patient, time)
         }
     }
 }

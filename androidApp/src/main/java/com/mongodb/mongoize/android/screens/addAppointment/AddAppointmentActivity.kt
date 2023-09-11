@@ -12,13 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +38,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mongodb.mongoize.android.MyApplicationTheme
 import com.mongodb.mongoize.android.R
+import kotlinx.datetime.Clock
+import kotlinx.datetime.FixedOffsetTimeZone
+import kotlinx.datetime.Instant
+import org.mongodb.kbson.ObjectId
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class AddAppointmentActivity : ComponentActivity() {
 
@@ -51,7 +66,7 @@ class AddAppointmentActivity : ComponentActivity() {
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(id = R.string.conference_activity),
+                        text = stringResource(id = R.string.appointment_activity),
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 }, colors = TopAppBarDefaults.smallTopAppBarColors(
@@ -69,20 +84,14 @@ class AddAppointmentActivity : ComponentActivity() {
 
         val vm = viewModel<AddAppointmentViewModel>()
 
-        val name = remember { mutableStateOf("") }
-        val location = remember { mutableStateOf<String>("") }
-        val startDate = remember { mutableStateOf<String>("") }
-        val endDate = remember { mutableStateOf<String>("") }
-
-        val onValueChange = { type: String, value: String ->
-            when (type) {
-                "conference" -> name.value = value
-                "location" -> location.value = value
-                "startDate" -> startDate.value = value
-                "endDate" -> endDate.value = value
-            }
-        }
-
+        val doctor = remember { mutableStateOf<ObjectId?>(null) }
+        // First you need to remember a datePickerState.
+        // This state is where you get the user selection from
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = Clock.System.now().toEpochMilliseconds(),
+            yearRange = IntRange(2023, 2100)
+        )
+        val timePickerState = rememberTimePickerState()
 
         Column(
             modifier = Modifier.padding(
@@ -91,10 +100,9 @@ class AddAppointmentActivity : ComponentActivity() {
                 end = 8.dp
             )
         ) {
-            ConferenceName(initialValue = name.value, onValueChange = onValueChange)
-            Location(initialValue = location.value, onValueChange = onValueChange)
-            StartDate(initialValue = startDate.value, onValueChange = onValueChange)
-            EndDate(initialValue = endDate.value, onValueChange = onValueChange)
+            Doctor(initialValue = doctor.value, onValueChange = onValueChange)
+            AppointmentDate(initialState = datePickerState)
+            AppointmentTime(initialState = timePickerState)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -104,12 +112,21 @@ class AddAppointmentActivity : ComponentActivity() {
                     colors = ButtonDefaults.buttonColors(),
                     content = {
                         Text(
-                            text = stringResource(id = R.string.conference_save),
+                            text = stringResource(id = R.string.appointment_save),
                             modifier = Modifier.padding(horizontal = 8.dp),
                         )
                     },
                     onClick = {
-                        vm.addConference(name.value, location.value, startDate.value, endDate.value)
+                        val selectedDate = datePickerState.selectedDateMillis?.let {
+                            Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.currentSystemDefault()).date
+                        }
+                        if (selectedDate == null) {
+                            finish()
+                        }
+                        val selectedTime =
+                            LocalTime(timePickerState.hour, timePickerState.minute, 0, 0)
+                        val selectedDateTime = LocalDateTime(selectedDate!!, selectedTime)
+                        vm.addAppointment(doctor.value, patient.value, selectedDateTime, endDate.value)
                         finish()
                     })
             }
@@ -117,75 +134,34 @@ class AddAppointmentActivity : ComponentActivity() {
     }
 
     @Composable
-    fun ConferenceName(
+    fun AppointmentName(
         initialValue: String, onValueChange: (String, String) -> Unit
     ) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = Clock.System.now().toEpochMilliseconds()
+        )
         TextField(
             value = initialValue,
             onValueChange = {
-                onValueChange("conference", it)
+                onValueChange("appointment", it)
             },
-            label = { Text(text = "Conference name") },
+            label = { Text(text = "Appointment name") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
         )
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun AppointmentDate(initialState: DatePickerState) {
+        // Second, you simply have to add the DatePicker component to your layout.
+        DatePicker(state = initialState)
+        }
     }
 
     @Composable
-    fun Location(
-        initialValue: String, onValueChange: (String, String) -> Unit
-    ) {
-        TextField(
-            value = initialValue,
-            onValueChange = {
-                onValueChange("location", it)
-            },
-            label = { Text(text = "Location") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        )
+    fun AppointmentTime(initialState: TimePickerState) {
+        TimePicker(state = initialState)
     }
-
-
-    @Composable
-    fun StartDate(
-        initialValue: String, onValueChange: (String, String) -> Unit
-    ) {
-        TextField(
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            value = initialValue,
-            onValueChange = {
-                if (it.length <= 10) onValueChange("startDate", it)
-            },
-            label = { Text(text = "Start Date") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            placeholder = { Text(text = "DD-MM-YYYY Format")}
-        )
-    }
-
-    @Composable
-    fun EndDate(
-        initialValue: String, onValueChange: (String, String) -> Unit
-    ) {
-        TextField(
-            singleLine = true,
-            value = initialValue,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            onValueChange = {
-                if (it.length <= 10) onValueChange("endDate", it)
-            },
-            label = { Text(text = "End Date") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            placeholder = { Text(text = "DD-MM-YYYY Format")}
-        )
-    }
-
-
 }

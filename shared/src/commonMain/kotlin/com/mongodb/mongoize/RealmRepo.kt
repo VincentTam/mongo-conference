@@ -11,13 +11,16 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.mongodb.kbson.ObjectId
 
 class RealmRepo {
 
@@ -156,8 +159,20 @@ class RealmRepo {
                     }
                 }
             }
-
         }
     }
 
+    suspend fun confirmAppointment(appointmentId: ObjectId) {
+        return withContext(Dispatchers.Default) {
+            val appointment = realm.query<AppointmentInfo>("_id = $0", appointmentId).first().find()
+            if (appointment != null) {
+                realm.write {
+                    (findLatest(appointment) as AppointmentInfo).run {
+                        this.arrivalTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                        copyToRealm(this)
+                    }
+                }
+            }
+        }
+    }
 }
