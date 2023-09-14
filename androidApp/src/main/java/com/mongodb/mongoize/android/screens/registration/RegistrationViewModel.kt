@@ -7,16 +7,24 @@ import com.mongodb.mongoize.RealmRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 
 class RegistrationViewModel : ViewModel() {
 
     private val repo = RealmRepo()
     val registrationSuccess = MutableLiveData<Boolean>()
 
-    fun register(email: String, password: String) {
+    fun register(surname: String, firstName: String, dateOfBirth: LocalDate, email: String, phoneNumber: Long, gender: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repo.registration(password = password, email = email).run {
+                repo.registration(surname = surname,
+                    firstName = firstName,
+                    dateOfBirth = dateOfBirth,
+                    email = email,
+                    phoneNumber = phoneNumber,
+                    gender = gender,
+                    password = password
+                ).run {
                     withContext(Dispatchers.Main) {
                         registrationSuccess.value = true
                     }

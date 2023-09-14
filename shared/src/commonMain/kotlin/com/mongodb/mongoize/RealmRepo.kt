@@ -54,12 +54,34 @@ class RealmRepo {
         return appService.login(Credentials.emailPassword(email, password))
     }
 
-    suspend fun registration(surname: String, firstName: String, dateOfBirth: LocalDate, email: String, phoneNumber: Long, gender: String, password: String) {
+    suspend fun registration(
+        surname: String,
+        firstName: String,
+        dateOfBirth: LocalDate,
+        email: String,
+        phoneNumber: Long,
+        gender: String,
+        password: String
+    ) {
         appService.emailPasswordAuth.registerUser(email = email, password = password)
-        addUserProfile(surname = surname, firstName = firstName, dateOfBirth = dateOfBirth, email = email, phoneNumber = phoneNumber, gender = gender)
+        addUserProfile(
+            surname = surname,
+            firstName = firstName,
+            dateOfBirth = dateOfBirth,
+            email = email,
+            phoneNumber = phoneNumber,
+            gender = gender
+        )
     }
 
-    suspend fun addUserProfile(surname: String, firstName: String, dateOfBirth: LocalDate, email: String, phoneNumber: Long, gender: String) {
+    suspend fun addUserProfile(
+        surname: String,
+        firstName: String,
+        dateOfBirth: LocalDate,
+        email: String,
+        phoneNumber: Long,
+        gender: String
+    ) {
         withContext(Dispatchers.Default) {
             if (appService.currentUser != null) {
                 realm.write {
