@@ -11,20 +11,22 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toInstant
 import org.mongodb.kbson.ObjectId
 
 class RealmRepo {
 
-    private val schemaClass = setOf(UserInfo::class, AppointmentInfo::class)
+    private val schemaClass = setOf(UserInfo::class, AppointmentInfo::class, PrescriptionLine::class)
 
     private val appService by lazy {
         val appConfiguration =
@@ -40,21 +42,40 @@ class RealmRepo {
                 .initialSubscriptions { realm ->
                     add(realm.query<UserInfo>(), name = "user info", updateExisting = true)
                     add(realm.query<AppointmentInfo>(), name = "appointment info", updateExisting = true)
-                    add(
-                        realm.query<AppointmentInfo>(),
-                        name = "appointment info",
-                        updateExisting = true
-                    )
                 }.waitForInitialRemoteData().build()
         Realm.open(config)
+    }
+
+    fun getUserId() : String {
+        return appService.currentUser!!.id
     }
 
     suspend fun login(email: String, password: String): User {
         return appService.login(Credentials.emailPassword(email, password))
     }
 
-    suspend fun registration(password: String, email: String) {
-        appService.emailPasswordAuth.registerUser(email = email, password =  password)
+    suspend fun registration(surname: String, firstName: String, dateOfBirth: LocalDate, email: String, phoneNumber: Long, gender: String, password: String) {
+        appService.emailPasswordAuth.registerUser(email = email, password = password)
+        addUserProfile(surname = surname, firstName = firstName, dateOfBirth = dateOfBirth, email = email, phoneNumber = phoneNumber, gender = gender)
+    }
+
+    suspend fun addUserProfile(surname: String, firstName: String, dateOfBirth: LocalDate, email: String, phoneNumber: Long, gender: String) {
+        withContext(Dispatchers.Default) {
+            if (appService.currentUser != null) {
+                realm.write {
+                    val userInfo = UserInfo().apply {
+                        this._id = getUserId()
+                        this.surname = surname
+                        this.firstName = firstName
+                        this.dateOfBirth = RealmInstant.from( 86400L * dateOfBirth.toEpochDays(), 0)
+                        this.email = email
+                        this.phoneNumber = phoneNumber
+                        this.gender = gender
+                    }
+                    copyToRealm(userInfo)
+                }
+            }
+        }
     }
 
     fun getUserProfile(): Flow<UserInfo?> {
@@ -72,7 +93,7 @@ class RealmRepo {
         val count = realm.query<UserInfo>().count().find()
         println("getUserProfile userCount $count")
 
-        val userId = appService.currentUser!!.id
+        val userId = getUserId()
 
         println("getUserProfile userId $userId")
 
@@ -91,29 +112,35 @@ class RealmRepo {
     suspend fun saveUserInfo(
         surname: String,
         firstName: String,
-        dateOfBirth: LocalDateTime,
+        dateOfBirth: LocalDate,
         phoneNumber: String,
         specification: String,
         isReceptionist: Boolean,
         gender: String,
-        workingHours: List<TimeSlot>,
+        hour1: Int,
+        hour2: Int,
+        hour3: Int,
+        hour4: Int,
         isActive: Boolean
     ) {
         withContext(Dispatchers.Default) {
             if (appService.currentUser != null) {
-                val userId = appService.currentUser!!.id
+                val userId = getUserId()
                 realm.write {
                     var user = query<UserInfo>("_id = $0", userId).first().find()
                     if (user != null) {
                         user = findLatest(user)!!.also {
                             it.surname = surname
                             it.firstName = firstName
-                            it.dateOfBirth = dateOfBirth
-                            it.phoneNumber = phoneNumber.toLongOrNull()
+                            it.dateOfBirth = RealmInstant.from( 86400L * dateOfBirth.toEpochDays(), 0)
+                            it.phoneNumber = phoneNumber.toLong()
                             it.specification = specification
                             it.isReceptionist = isReceptionist
                             it.gender = gender
-                            it.workingHours = workingHours
+                            it.hour1 = hour1
+                            it.hour2 = hour2
+                            it.hour3 = hour3
+                            it.hour4 = hour4
                             it.isActive = isActive
                         }
                         copyToRealm(user)
@@ -127,17 +154,25 @@ class RealmRepo {
         appService.currentUser?.logOut()
     }
 
-    suspend fun addAppointment(doctor: ObjectId, patient: ObjectId, time: LocalDateTime) {
+    suspend fun addAppointment(doctor: String, patient: String, time: LocalDateTime) {
         withContext(Dispatchers.Default) {
             realm.write {
                 val appointmentInfo = AppointmentInfo().apply {
                     this.doctor = doctor
                     this.patient = patient
-                    this.time = time
+                    this.time = RealmInstant.from(time.toInstant(TimeZone.currentSystemDefault()).epochSeconds, 0)
                 }
                 copyToRealm(appointmentInfo)
             }
         }
+    }
+
+    suspend fun getDoctorList(): CommonFlow<List<UserInfo>> {
+        return withContext(Dispatchers.Default) {
+            realm.query<UserInfo>("specification != $0", "").asFlow().map {
+                it.list
+            }
+        }.asCommonFlow()
     }
 
     suspend fun getAppointmentLists(): CommonFlow<List<AppointmentInfo>> {
@@ -168,7 +203,7 @@ class RealmRepo {
             if (appointment != null) {
                 realm.write {
                     (findLatest(appointment) as AppointmentInfo).run {
-                        this.arrivalTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                        this.arrivalTime = RealmInstant.from(Clock.System.now().epochSeconds, 0)
                         copyToRealm(this)
                     }
                 }
