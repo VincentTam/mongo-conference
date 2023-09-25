@@ -28,6 +28,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -50,9 +51,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mongodb.mongoize.AppointmentInfo
 import com.mongodb.mongoize.android.R
 import com.mongodb.mongoize.android.screens.addAppointment.AddAppointmentActivity
-import com.mongodb.mongoize.android.screens.conferenceDetail.ConferenceDetailView
+import com.mongodb.mongoize.android.screens.appointmentDetail.AppointmentDetailView
 import com.mongodb.mongoize.android.screens.profile.ProfileScreen
-import io.realm.kotlin.types.ObjectId
+import org.mongodb.kbson.ObjectId
 
 class HomeScreen : ComponentActivity() {
 
@@ -111,15 +112,14 @@ class HomeScreen : ComponentActivity() {
             }
         }, floatingActionButtonPosition = FabPosition.End
         ) {
-            ConferenceList(it.calculateTopPadding())
+            AppointmentList(it.calculateTopPadding())
         }
     }
 
     @Composable
-    fun ConferenceList(topPaddingValue: Dp) {
-
+    fun AppointmentList(topPaddingValue: Dp) {
         val homeVM = viewModel<HomeViewModel>()
-        val events = homeVM.events.observeAsState(emptyList()).value
+        val events = homeVM.appointments.observeAsState(emptyList()).value
 
         LazyColumn(
             modifier = Modifier
@@ -128,7 +128,6 @@ class HomeScreen : ComponentActivity() {
             verticalArrangement = Arrangement.SpaceAround
 
         ) {
-
             item {
                 Row(
                     modifier = Modifier
@@ -141,12 +140,12 @@ class HomeScreen : ComponentActivity() {
                     )
                 }
 
-                Divider(
-                    thickness = 1.dp,
+                HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp)
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 16.dp),
+                    thickness = 1.dp
                 )
             }
 
@@ -165,10 +164,10 @@ class HomeScreen : ComponentActivity() {
                 .fillMaxWidth()
                 .padding(6.dp)
                 .clickable {
-                    goToConferenceDetails(
+                    goToAppointmentDetails(
                         context = context,
-                        conferenceName = appointmentInfo.name,
-                        conferenceId = appointmentInfo._id
+                        appointmentName = appointmentInfo.name,
+                        appointmentId = appointmentInfo._id
                     )
                 },
             shape = RoundedCornerShape(4.dp),
@@ -222,14 +221,14 @@ class HomeScreen : ComponentActivity() {
     }
 
 
-    private fun goToConferenceDetails(
+    private fun goToAppointmentDetails(
         context: Context,
-        conferenceId: ObjectId,
-        conferenceName: String
+        appointmentId: ObjectId,
+        appointmentName: String
     ) {
-        val intent = Intent(context, ConferenceDetailView::class.java)
-        intent.putExtra("name", conferenceName)
-        intent.putExtra("id", conferenceId.toString())
+        val intent = Intent(context, AppointmentDetailView::class.java)
+        intent.putExtra("name", appointmentName)
+        intent.putExtra("id", appointmentId.toString())
         context.startActivity(intent)
     }
 

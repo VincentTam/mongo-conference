@@ -1,4 +1,4 @@
-package com.mongodb.mongoize.android.screens.conferenceDetail
+package com.mongodb.mongoize.android.screens.appointmentDetail
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -36,7 +36,7 @@ import com.mongodb.mongoize.android.MyApplicationTheme
 import io.realm.kotlin.types.ObjectId
 
 @ExperimentalMaterial3Api
-class ConferenceDetailView : ComponentActivity() {
+class AppointmentDetailView : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,10 +50,10 @@ class ConferenceDetailView : ComponentActivity() {
     @Composable
     fun TopBar() {
         val name = intent.getStringExtra("name") ?: return
-        val confId = intent.getStringExtra("id") ?: return
+        val appointmentId = intent.getStringExtra("id") ?: return
 
-        val vm = viewModel<ConferenceDetailViewModel>()
-        vm.updateConferenceId(confId)
+        val vm = viewModel<AppointmentDetailViewModel>()
+        vm.updateConferenceId(appointmentId)
 
         Scaffold(topBar = {
             TopAppBar(
@@ -71,8 +71,8 @@ class ConferenceDetailView : ComponentActivity() {
     }
 
     @Composable
-    fun Container(topPadding: Dp, vm: ConferenceDetailViewModel) {
-        val allTalks = vm.talks.observeAsState(emptyList())
+    fun Container(topPadding: Dp, vm: AppointmentDetailViewModel) {
+        val allTalks = vm.appointments.observeAsState(emptyList())
         val selectedTalks = vm.selectedTalks.observeAsState(emptyList())
         val onTalkStateChange = { talkId: ObjectId, state: Boolean ->
             vm.updateTalkStatus(talkId = talkId, state = state)

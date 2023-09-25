@@ -1,31 +1,31 @@
-package com.mongodb.mongoize.android.screens.conferenceDetail
+package com.mongodb.mongoize.android.screens.appointmentDetail
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
+import com.mongodb.mongoize.AppointmentInfo
 import com.mongodb.mongoize.RealmRepo
-import com.mongodb.mongoize.SessionInfo
-import io.realm.kotlin.types.ObjectId
+import org.mongodb.kbson.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class ConferenceDetailViewModel() : ViewModel() {
+class AppointmentDetailViewModel() : ViewModel() {
 
     val repo = RealmRepo()
-    lateinit var conferenceId: ObjectId
+    lateinit var appointmentId: ObjectId
 
-    fun updateConferenceId(id: String) {
-        conferenceId = ObjectId.from(id)
+    fun updateAppointmentId(id: String) {
+        appointmentId = ObjectId.from(id)
     }
 
-    val talks: LiveData<List<SessionInfo>> = liveData {
-        emitSource(repo.getTalks(conferenceId).asLiveData(Dispatchers.IO))
+    val appointment: LiveData<AppointmentInfo> = liveData {
+        emitSource(repo.getAppointment(appointmentId).asLiveData(Dispatchers.IO))
     }
 
     val selectedTalks: LiveData<List<SessionInfo>> = liveData {
-        emitSource(repo.getSelectedTalks(conferenceId).asLiveData(Dispatchers.IO))
+        emitSource(repo.getSelectedTalks(appointmentId).asLiveData(Dispatchers.IO))
     }
 
     fun updateTalkStatus(talkId: ObjectId, state: Boolean) {

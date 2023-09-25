@@ -232,4 +232,13 @@ class RealmRepo {
             }
         }
     }
+
+    suspend fun getAppointment(appointmentId: ObjectId): Flow<AppointmentInfo?> {
+        val appointment = realm.query<AppointmentInfo>("_id = $0", appointmentId).asFlow().map {
+            println("get ${it.list.size} appointment")
+            it.list.firstOrNull()
+        }
+
+        return appointment
+    }
 }
