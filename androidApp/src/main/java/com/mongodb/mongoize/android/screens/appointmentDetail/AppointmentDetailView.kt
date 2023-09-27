@@ -31,9 +31,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mongodb.mongoize.SessionInfo
+import com.mongodb.mongoize.AppointmentInfo
 import com.mongodb.mongoize.android.MyApplicationTheme
-import io.realm.kotlin.types.ObjectId
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.mongodb.kbson.ObjectId
 
 @ExperimentalMaterial3Api
 class AppointmentDetailView : ComponentActivity() {
@@ -53,7 +56,7 @@ class AppointmentDetailView : ComponentActivity() {
         val appointmentId = intent.getStringExtra("id") ?: return
 
         val vm = viewModel<AppointmentDetailViewModel>()
-        vm.updateConferenceId(appointmentId)
+        vm.updateAppointmentId(appointmentId)
 
         Scaffold(topBar = {
             TopAppBar(
@@ -72,17 +75,17 @@ class AppointmentDetailView : ComponentActivity() {
 
     @Composable
     fun Container(topPadding: Dp, vm: AppointmentDetailViewModel) {
-        val allTalks = vm.appointments.observeAsState(emptyList())
-        val selectedTalks = vm.selectedTalks.observeAsState(emptyList())
-        val onTalkStateChange = { talkId: ObjectId, state: Boolean ->
-            vm.updateTalkStatus(talkId = talkId, state = state)
+        val allAppointments = vm.appointments.observeAsState(emptyList())
+        val activeAppointments = vm.activeAppointments.observeAsState(emptyList())
+        val onAppointmentStateChange = { appointmentId: ObjectId, state: Boolean ->
+            vm.updateAppointmentStatus(appointmentId = appointmentId, state = state)
         }
 
 
         LazyColumn(modifier = Modifier.padding(top = topPadding)) {
             item {
                 Text(
-                    text = "Selected Talks",
+                    text = "Selected Appointments",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -92,8 +95,8 @@ class AppointmentDetailView : ComponentActivity() {
                 )
             }
 
-            items(count = selectedTalks.value.size) {
-                TalkView(talk = selectedTalks.value[it], onTalkStateChange)
+            items(count = activeAppointments.value.size) {
+                AppointmentView(appointment = activeAppointments.value[it], onAppointmentStateChange)
             }
 
             item {
@@ -107,7 +110,7 @@ class AppointmentDetailView : ComponentActivity() {
 
             item {
                 Text(
-                    text = "All Talks",
+                    text = "All Appointments",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
@@ -117,15 +120,15 @@ class AppointmentDetailView : ComponentActivity() {
                 )
             }
 
-            items(count = allTalks.value.size) {
-                TalkView(talk = allTalks.value[it], onTalkStateChange = onTalkStateChange)
+            items(count = allAppointments.value.size) {
+                AppointmentView(appointment = allAppointments.value[it], onAppointmentStateChange = onAppointmentStateChange)
             }
 
         }
     }
 
     @Composable
-    fun TalkView(talk: SessionInfo, onTalkStateChange: (ObjectId, Boolean) -> Unit) {
+    fun AppointmentView(appointment: AppointmentInfo, onAppointmentStateChange: (ObjectId, Boolean) -> Unit) {
 
         CardDefaults.cardColors()
 
@@ -152,21 +155,22 @@ class AppointmentDetailView : ComponentActivity() {
                         .wrapContentHeight()
                         .weight(0.6f)
                 ) {
-
                     Text(
-                        text = talk.talkTitle,
+                        text = appointment.doctor,
                         modifier = Modifier.fillMaxWidth(),
                         fontWeight = FontWeight.Bold
                     )
 
-                    Text(text = talk.abstract, maxLines = 2, modifier = Modifier.fillMaxWidth())
+                    val timestamp = appointment.time!!.epochSeconds // This is a Unix timestamp
+                    val instant = Instant.fromEpochSeconds(timestamp)
+                    val timeZone = TimeZone.currentSystemDefault()
+                    val localDateTime = instant.toLocalDateTime(timeZone)
 
-
-                    Text(text = "${talk.duration} mins", modifier = Modifier.fillMaxWidth())
+                    Text(text = localDateTime.toString(), maxLines = 2, modifier = Modifier.fillMaxWidth())
                 }
 
-                Switch(checked = talk.isAccepted, onCheckedChange = {
-                    onTalkStateChange(talk._id, it)
+                Switch(checked = appointment.isAccepted, onCheckedChange = {
+                    onAppointmentStateChange(appointment._id, it)
                 })
             }
         }

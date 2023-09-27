@@ -7,9 +7,9 @@ import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.mongodb.mongoize.AppointmentInfo
 import com.mongodb.mongoize.RealmRepo
-import org.mongodb.kbson.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.mongodb.kbson.ObjectId
 
 class AppointmentDetailViewModel() : ViewModel() {
 
@@ -17,20 +17,20 @@ class AppointmentDetailViewModel() : ViewModel() {
     lateinit var appointmentId: ObjectId
 
     fun updateAppointmentId(id: String) {
-        appointmentId = ObjectId.from(id)
+        appointmentId = ObjectId(id)
     }
 
-    val appointment: LiveData<AppointmentInfo> = liveData {
-        emitSource(repo.getAppointment(appointmentId).asLiveData(Dispatchers.IO))
+    val appointments: LiveData<List<AppointmentInfo>> = liveData {
+        emitSource(repo.getAppointmentListAsPatient().asLiveData(Dispatchers.IO))
     }
 
-    val selectedTalks: LiveData<List<SessionInfo>> = liveData {
-        emitSource(repo.getSelectedTalks(appointmentId).asLiveData(Dispatchers.IO))
+    val activeAppointments: LiveData<List<AppointmentInfo>> = liveData {
+        emitSource(repo.getActiveAppointmentListAsPatient().asLiveData(Dispatchers.IO))
     }
 
-    fun updateTalkStatus(talkId: ObjectId, state: Boolean) {
+    fun updateAppointmentStatus(appointmentId: ObjectId, state: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.cancelAppointment(talkId, state)
+            repo.cancelAppointment(appointmentId, state)
         }
     }
 }

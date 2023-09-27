@@ -24,7 +24,6 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -53,6 +52,9 @@ import com.mongodb.mongoize.android.R
 import com.mongodb.mongoize.android.screens.addAppointment.AddAppointmentActivity
 import com.mongodb.mongoize.android.screens.appointmentDetail.AppointmentDetailView
 import com.mongodb.mongoize.android.screens.profile.ProfileScreen
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.mongodb.kbson.ObjectId
 
 class HomeScreen : ComponentActivity() {
@@ -119,7 +121,7 @@ class HomeScreen : ComponentActivity() {
     @Composable
     fun AppointmentList(topPaddingValue: Dp) {
         val homeVM = viewModel<HomeViewModel>()
-        val events = homeVM.appointments.observeAsState(emptyList()).value
+        val appointments = homeVM.appointments.observeAsState(emptyList()).value
 
         LazyColumn(
             modifier = Modifier
@@ -149,8 +151,8 @@ class HomeScreen : ComponentActivity() {
                 )
             }
 
-            items(count = events.size) {
-                EventItem(events[it])
+            items(count = appointments.size) {
+                EventItem(appointments[it])
             }
         }
     }
@@ -166,7 +168,7 @@ class HomeScreen : ComponentActivity() {
                 .clickable {
                     goToAppointmentDetails(
                         context = context,
-                        appointmentName = appointmentInfo.name,
+                        appointmentName = appointmentInfo.doctor,
                         appointmentId = appointmentInfo._id
                     )
                 },
@@ -189,14 +191,20 @@ class HomeScreen : ComponentActivity() {
                 ) {
                     Text(
                         modifier = Modifier.padding(bottom = 8.dp),
-                        text = "${appointmentInfo.name}, ${appointmentInfo.notes}",
+                        text = "${appointmentInfo.doctor}, ${appointmentInfo.notes}",
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
 
+                    val timestamp = appointmentInfo.time!!.epochSeconds // This is a Unix timestamp
+                    val instant = Instant.fromEpochSeconds(timestamp)
+                    val timeZone = TimeZone.currentSystemDefault()
+                    val localDateTime = instant.toLocalDateTime(timeZone)
+
                     Text(
-                        text = appointmentInfo.time,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        text = localDateTime.toString(),
+                        maxLines = 2
                     )
                 }
 

@@ -197,9 +197,16 @@ class RealmRepo {
         }.asCommonFlow()
     }
 
-    suspend fun getAppointmentLists(): CommonFlow<List<AppointmentInfo>> {
+    suspend fun getAppointmentListAsPatient(): CommonFlow<List<AppointmentInfo>> {
         return withContext(Dispatchers.Default) {
-            realm.query<AppointmentInfo>().asFlow().map {
+            realm.query<AppointmentInfo>("patient = $0", getUserId()).asFlow().map {
+                it.list
+            }
+        }.asCommonFlow()
+    }
+    suspend fun getActiveAppointmentListAsPatient(): CommonFlow<List<AppointmentInfo>> {
+        return withContext(Dispatchers.Default) {
+            realm.query<AppointmentInfo>("patient == $0 AND isCancelled == false", getUserId()).asFlow().map {
                 it.list
             }
         }.asCommonFlow()
@@ -207,8 +214,8 @@ class RealmRepo {
 
     suspend fun cancelAppointment(appointmentId: ObjectId, isCancelled: Boolean) {
         return withContext(Dispatchers.Default) {
-            val appointment = realm.query<AppointmentInfo>("_id = $0", appointmentId).first().find()
-            if (appointment != null) {
+            val appointment = realm.query<AppointmentInfo>("_id == $0", appointmentId).first().find()
+            if (appointment != null && !appointment.isAccepted) {
                 realm.write {
                     (findLatest(appointment) as AppointmentInfo).run {
                         this.isCancelled = true

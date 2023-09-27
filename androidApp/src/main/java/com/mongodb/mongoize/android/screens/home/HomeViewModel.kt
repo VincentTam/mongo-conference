@@ -12,7 +12,7 @@ class HomeViewModel : ViewModel() {
     private val repo: RealmRepo = RealmRepo()
 
     val appointments: LiveData<List<AppointmentInfo>> = liveData {
-        emitSource(repo.getAppointmentLists().asLiveData())
+        emitSource(repo.getAppointmentListAsPatient().asLiveData())
     }
 
 }
