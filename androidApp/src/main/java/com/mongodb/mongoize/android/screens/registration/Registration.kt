@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -59,7 +61,6 @@ class Registration : ComponentActivity() {
         val surnameState = remember { mutableStateOf("") }
         val genderState = remember { mutableStateOf("") }
         val phoneState = remember { mutableStateOf("") }
-        val phoneRegex = "^0[0-9]{0,9}$".toRegex()
         val datePickerState = rememberDatePickerState(yearRange = IntRange(1900, 2100))
         val context = LocalContext.current
 
@@ -134,14 +135,13 @@ class Registration : ComponentActivity() {
                     TextField(
                         value = phoneState.value,
                         onValueChange = {
-                            if (it.matches(phoneRegex)) {
-                                phoneState.value = it
-                            }
+                            phoneState.value = it
                         },
-                        label = { Text(text = "Gender") },
+                        label = { Text(text = "Phone no.") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp)
+                            .padding(vertical = 4.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
 
                     TextField(
