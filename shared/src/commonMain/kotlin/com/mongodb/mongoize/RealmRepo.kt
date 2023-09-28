@@ -131,6 +131,22 @@ class RealmRepo {
         return flowOf(appService.currentUser != null)
     }
 
+    suspend fun saveUserInfo(phoneNumber: Long) {
+        withContext(Dispatchers.Default) {
+            if (appService.currentUser != null) {
+                val userId = getUserId()
+                realm.write {
+                    var user = query<UserInfo>("_id = $0", userId).first().find()
+                    if (user != null) {
+                        user = findLatest(user)!!.also {
+                            it.phoneNumber = phoneNumber
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     suspend fun saveUserInfo(
         surname: String,
         firstName: String,
