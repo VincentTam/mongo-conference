@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mongodb.mongoize.android.MyApplicationTheme
 import com.mongodb.mongoize.android.R
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class Registration : ComponentActivity() {
 
@@ -50,7 +55,12 @@ class Registration : ComponentActivity() {
         val viewModel: RegistrationViewModel = viewModel()
         val emailState = remember { mutableStateOf("") }
         val passwordState = remember { mutableStateOf("") }
-
+        val firstNameState = remember { mutableStateOf("") }
+        val surnameState = remember { mutableStateOf("") }
+        val genderState = remember { mutableStateOf("") }
+        val phoneState = remember { mutableStateOf("") }
+        val phoneRegex = "^0[0-9]{0,9}$".toRegex()
+        val datePickerState = rememberDatePickerState(yearRange = IntRange(1900, 2100))
         val context = LocalContext.current
 
         viewModel.registrationSuccess.observe(this) {
@@ -62,14 +72,12 @@ class Registration : ComponentActivity() {
 
         MyApplicationTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(8.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
-
                     Image(
                         painter = painterResource(id = R.drawable.ic_realm_logo),
                         contentScale = ContentScale.Fit,
@@ -79,6 +87,61 @@ class Registration : ComponentActivity() {
                             .defaultMinSize(minHeight = 200.dp)
                             .align(CenterHorizontally)
                             .padding(bottom = 20.dp)
+                    )
+
+                    TextField(
+                        value = surnameState.value,
+                        onValueChange = {
+                            surnameState.value = it
+                        },
+                        label = { Text(text = "Surname") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    )
+
+                    TextField(
+                        value = firstNameState.value,
+                        onValueChange = {
+                            firstNameState.value = it
+                        },
+                        label = { Text(text = "First name") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    )
+
+                    DatePicker(
+                        state = datePickerState,
+                        title = {
+                            Text(
+                                text = "Select your date of birth"
+                            )
+                        }
+                    )
+
+                    TextField(
+                        value = genderState.value,
+                        onValueChange = {
+                            genderState.value = it
+                        },
+                        label = { Text(text = "Gender") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    )
+
+                    TextField(
+                        value = phoneState.value,
+                        onValueChange = {
+                            if (it.matches(phoneRegex)) {
+                                phoneState.value = it
+                            }
+                        },
+                        label = { Text(text = "Gender") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
                     )
 
                     TextField(
@@ -106,8 +169,20 @@ class Registration : ComponentActivity() {
                     Button(modifier = Modifier
                         .padding(top = 48.dp)
                         .align(Alignment.CenterHorizontally), onClick = {
+                        val selectedDate = datePickerState.selectedDateMillis?.let {
+                            Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.currentSystemDefault()).date
+                        }
+                        if (selectedDate == null) {
+                            finish()
+                        }
                         viewModel.register(
-                            emailState.value, passwordState.value
+                            surnameState.value,
+                            firstNameState.value,
+                            selectedDate!!,
+                            emailState.value,
+                            phoneState.value.toLong(),
+                            genderState.value,
+                            passwordState.value
                         )
                     }) {
                         Text(text = "Sign up")
