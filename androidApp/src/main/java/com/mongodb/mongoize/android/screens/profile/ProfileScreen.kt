@@ -57,26 +57,29 @@ class ProfileScreen : ComponentActivity() {
             if (isReadOnly.value) stringResource(id = R.string.profile_edit) else stringResource(id = R.string.profile_save)
         val profileVM: ProfileViewModel = viewModel()
 
-        val name = remember { mutableStateOf("") }
+        val surname = remember { mutableStateOf("") }
+        val firstName = remember { mutableStateOf("") }
+        val gender = remember { mutableStateOf("") }
         val email = remember { mutableStateOf("") }
-        val orgName = remember { mutableStateOf<String>("") }
-        val phoneNumber = remember { mutableStateOf<String>("") }
+        val specification = remember { mutableStateOf("") }
+        val phoneNumber = remember { mutableStateOf("") }
+        val isReceptionist = remember { mutableStateOf(false) }
 
         val onValueChange = { type: String, value: String ->
             when (type) {
-                "name" -> name.value = value
-                "orgName" -> orgName.value = value
                 "phoneNumber" -> phoneNumber.value = value
             }
-
         }
 
         profileVM.userInfo.observeAsState().apply {
             this.value?.let {
-                name.value = it.surname
+                surname.value = it.surname
+                firstName.value = it.firstName
+                gender.value = it.gender
                 email.value = it.email
-                orgName.value = it.orgName ?: ""
-                phoneNumber.value = it.phoneNumber?.toString() ?: ""
+                isReceptionist.value = it.isReceptionist
+                specification.value = it.specification
+                phoneNumber.value = it.phoneNumber.toString()
             }
         }
 
@@ -93,13 +96,8 @@ class ProfileScreen : ComponentActivity() {
                     text = editLabel, modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .clickable {
-
                             if (!isReadOnly.value) {
-                                profileVM.save(
-                                    name.value,
-                                    orgName.value,
-                                    phoneNumber.value
-                                )
+                                profileVM.save(phoneNumber.value)
                             }
                             isReadOnly.value = !isReadOnly.value
                         }, color = Color.White
@@ -124,29 +122,17 @@ class ProfileScreen : ComponentActivity() {
                     .padding(it)
             ) {
                 UserImage()
-
-                UserName(
-                    isReadOnly = isReadOnly.value,
-                    initialValue = name.value,
-                    onValueChange = onValueChange
-                )
-
+                UserName(initialValue = firstName.value + " " + surname.value)
+                Gender(initialValue = gender.value)
                 Email(initialValue = email.value)
-
-                OrganizationName(
-                    isReadOnly = isReadOnly.value,
-                    initialValue = orgName.value,
-                    onValueChange = onValueChange
-                )
-
                 PhoneNumber(
                     isReadOnly = isReadOnly.value,
                     initialValue = phoneNumber.value,
                     onValueChange = onValueChange
                 )
+                Role(specification = specification.value, isReceptionist = isReceptionist.value)
             }
         }
-
     }
 
     @Preview
@@ -171,31 +157,11 @@ class ProfileScreen : ComponentActivity() {
     }
 
     @Composable
-    fun UserName(
-        isReadOnly: Boolean, initialValue: String, onValueChange: (String, String) -> Unit
-    ) {
+    fun UserName(initialValue: String) {
         TextField(
             value = initialValue,
-            onValueChange = {
-                onValueChange("name", it)
-            },
+            onValueChange = {},
             label = { Text(text = "Name") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clickable(enabled = !isReadOnly, onClick = {}),
-            readOnly = isReadOnly
-        )
-    }
-
-    @Composable
-    fun Email(initialValue: String) {
-        TextField(
-            value = initialValue,
-            onValueChange = {
-
-            },
-            label = { Text(text = "Email") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
@@ -204,18 +170,15 @@ class ProfileScreen : ComponentActivity() {
     }
 
     @Composable
-    fun OrganizationName(
-        isReadOnly: Boolean, initialValue: String, onValueChange: (String, String) -> Unit
-    ) {
+    fun Email(initialValue: String) {
         TextField(
             value = initialValue,
-            onValueChange = { onValueChange("orgName", it) },
-            label = { Text(text = "Organization Name") },
+            onValueChange = {},
+            label = { Text(text = "Email") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clickable(enabled = !isReadOnly, onClick = {}),
-            readOnly = isReadOnly
+                .padding(vertical = 4.dp),
+            readOnly = true
         )
     }
 
@@ -233,6 +196,34 @@ class ProfileScreen : ComponentActivity() {
                 .clickable(enabled = !isReadOnly, onClick = {}),
             readOnly = isReadOnly,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
+
+    @Composable
+    fun Gender(initialValue: String) {
+        TextField(
+            value = initialValue,
+            onValueChange = {},
+            label = { Text(text = "Name") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            readOnly = true
+        )
+    }
+
+    @Composable
+    fun Role(specification: String, isReceptionist: Boolean) {
+        val role = if (specification == "") "patient"
+            else if (isReceptionist) "receptionist" else "doctor"
+        TextField(
+            value = role,
+            onValueChange = {},
+            label = { Text(text = "Role") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            readOnly = true
         )
     }
 
